@@ -1,0 +1,54 @@
+{
+  "name": "chara",
+  "version": "1.0.0",
+  "description": "Evolving NFTs powered by AI and on-chain activity on Polygon",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network hardhat",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network polygon_amoy",
+    "deploy:mainnet": "hardhat run scripts/deploy.js --network polygon_mainnet",
+    "verify": "hardhat verify --network polygon_amoy",
+    "node": "hardhat node",
+    "clean": "hardhat clean",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "backend:dev": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run node\" \"npm run frontend:dev\" \"npm run backend:dev\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexD-Great/Chara.git"
+  },
+  "keywords": [
+    "nft",
+    "polygon",
+    "ai",
+    "evolving",
+    "soulbound",
+    "web3",
+    "blockchain"
+  ],
+  "author": "Chara Team",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AlexD-Great/Chara/issues"
+  },
+  "homepage": "https://github.com/AlexD-Great/Chara#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomiclabs/hardhat-etherscan": "^3.1.8",
+    "chai": "^4.3.10",
+    "concurrently": "^8.2.2",
+    "hardhat": "^2.19.4",
+    "hardhat-gas-reporter": "^1.0.9"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "dotenv": "^16.3.1",
+    "erc721a": "^4.2.3"
+  }
+}
