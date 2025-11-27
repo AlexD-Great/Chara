@@ -1,7 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { Web3Provider } from '@/components/Web3Provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,9 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Web3Provider>
-          {children}
-        </Web3Provider>
+        {children}
       </body>
     </html>
   )

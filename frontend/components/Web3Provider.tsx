@@ -2,16 +2,63 @@
 
 import { ReactNode } from 'react'
 import { WagmiConfig, createConfig, configureChains } from 'wagmi'
-import { polygon, polygonAmoy } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 import { Web3Modal } from '@web3modal/react'
-import { EthereumClient, w3mConnectors, w3mProvider } from '@web3modal/ethereum'
+import { EthereumClient, w3mConnectors } from '@web3modal/ethereum'
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || ''
+const projectId = '71dbfba568107e4074e3b231d9959fe9'
+
+// Define localhost chain
+const hardhatLocal = {
+  id: 31337,
+  name: 'Hardhat Local',
+  network: 'hardhat',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: {
+      http: ['http://127.0.0.1:8545'],
+    },
+    public: {
+      http: ['http://127.0.0.1:8545'],
+    },
+  },
+  testnet: true,
+} as const
+
+// Define Polygon Amoy testnet
+const polygonAmoy = {
+  id: 80002,
+  name: 'Polygon Amoy Testnet',
+  network: 'polygon-amoy',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'POL',
+    symbol: 'POL',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://rpc-amoy.polygon.technology'],
+    },
+    public: {
+      http: ['https://rpc-amoy.polygon.technology'],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'PolygonScan',
+      url: 'https://amoy.polygonscan.com',
+    },
+  },
+  testnet: true,
+} as const
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [polygonAmoy, polygon],
-  [w3mProvider({ projectId }), publicProvider()]
+  [hardhatLocal, polygonAmoy],
+  [publicProvider()]
 )
 
 const wagmiConfig = createConfig({
