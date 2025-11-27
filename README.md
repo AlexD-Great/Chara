@@ -1,10 +1,12 @@
-# Chara - Evolving NFTs
+# Chara - Evolving Soulbound NFTs
 
-> AI-powered NFTs that evolve based on your on-chain activity on Polygon
+> Dynamic NFTs that evolve based on your on-chain activity on Polygon
 
-## 🎯 Project Overview
+🌐 **Live Demo**: [https://chara-one.vercel.app/](https://chara-one.vercel.app/)
 
-Chara is an innovative NFT platform where your digital identity evolves dynamically based on your on-chain behavior. Each NFT is soulbound to your wallet and transforms as you interact with the Polygon ecosystem.
+## Overview
+
+Chara creates soulbound (non-transferable) NFTs that evolve based on your DeFi activity on Polygon. Each NFT is permanently tied to your wallet and transforms as you interact with the ecosystem.
 
 ## ✨ Features
 
@@ -95,8 +97,8 @@ MIT License
 
 Contributions welcome! Please read our contributing guidelines.
 
-## 📞 Support
+## 🔗 Links
 
-- Discord: [Coming Soon]
-- Twitter: [Coming Soon]
-- Email: support@chara.xyz
+- **Live Demo**: https://chara-one.vercel.app/
+- **GitHub**: https://github.com/AlexD-Great/Chara
+- **Contract**: Polygon Amoy Testnet
