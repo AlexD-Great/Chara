@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Navbar } from '@/components/Navbar'
-import { Hero } from '@/components/Hero'
-import { MintSection } from '@/components/MintSection'
-import { Features } from '@/components/Features'
-import { Footer } from '@/components/Footer'
+import { Navbar } from '../components/Navbar'
+import { Hero } from '../components/Hero'
+import { MintSection } from '../components/MintSection'
+import { Features } from '../components/Features'
+import { Footer } from '../components/Footer'
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
