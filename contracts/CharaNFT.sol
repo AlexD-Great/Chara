@@ -46,6 +46,38 @@ contract CharaNFT is ERC721A, Ownable, ReentrancyGuard {
     /// @notice Authorized updaters who can trigger evolutions
     mapping(address => bool) public authorizedUpdaters;
 
+    // ============ Reputation System ============
+
+    /// @notice Reputation score components for each wallet
+    struct ReputationScore {
+        uint256 transactionVolume;    // Total DeFi transaction value
+        uint256 loanHistory;          // Loan repayment score
+        uint256 liquidityProvision;   // LP activity score
+        uint256 protocolDiversity;    // Number of protocols used
+        uint256 governanceScore;      // Governance participation
+        uint256 accountAge;           // Time since first activity
+        uint256 totalScore;           // Calculated total (0-1000)
+        uint256 reputationLevel;      // Level (0-10)
+        uint256 lastUpdated;          // Last score update timestamp
+    }
+
+    /// @notice Mapping of wallet to reputation score
+    mapping(address => ReputationScore) public reputationScores;
+
+    /// @notice Mapping of token ID to owner's reputation snapshot
+    mapping(uint256 => uint256) public tokenReputationSnapshot;
+
+    /// @notice Integrated protocols that can verify reputation
+    mapping(address => bool) public integratedProtocols;
+
+    /// @notice Score weights (in basis points, total = 10000)
+    uint256 public constant WEIGHT_TRANSACTION_VOLUME = 2000;  // 20%
+    uint256 public constant WEIGHT_LOAN_HISTORY = 2500;        // 25%
+    uint256 public constant WEIGHT_LIQUIDITY = 2000;           // 20%
+    uint256 public constant WEIGHT_PROTOCOL_DIVERSITY = 1500;  // 15%
+    uint256 public constant WEIGHT_GOVERNANCE = 1000;          // 10%
+    uint256 public constant WEIGHT_ACCOUNT_AGE = 1000;         // 10%
+
     // ============ Events ============
 
     event NFTMinted(address indexed minter, uint256 indexed tokenId, uint256 timestamp);
@@ -53,6 +85,8 @@ contract CharaNFT is ERC721A, Ownable, ReentrancyGuard {
     event MetadataUpdated(uint256 indexed tokenId, string newURI);
     event ActivityRecorded(address indexed wallet, uint256 activityType, uint256 score);
     event UpdaterAuthorized(address indexed updater, bool status);
+    event ReputationUpdated(address indexed wallet, uint256 totalScore, uint256 level);
+    event ProtocolIntegrated(address indexed protocol, bool status);
 
     // ============ Errors ============
 
@@ -63,6 +97,8 @@ contract CharaNFT is ERC721A, Ownable, ReentrancyGuard {
     error TransferNotAllowed();
     error Unauthorized();
     error InvalidTokenId();
+    error InvalidScore();
+    error ProtocolNotIntegrated();
 
     // ============ Constructor ============
 
@@ -149,6 +185,155 @@ contract CharaNFT is ERC721A, Ownable, ReentrancyGuard {
         
         activityScore[wallet] += score;
         emit ActivityRecorded(wallet, activityType, score);
+    }
+
+    // ============ Reputation Scoring Functions ============
+
+    /**
+     * @notice Update reputation score for a wallet
+     * @param wallet Wallet address
+     * @param transactionVolume Transaction volume score (0-100)
+     * @param loanHistory Loan history score (0-100)
+     * @param liquidityProvision LP score (0-100)
+     * @param protocolDiversity Protocol diversity score (0-100)
+     * @param governanceScore Governance score (0-100)
+     * @param accountAge Account age score (0-100)
+     */
+    function updateReputationScore(
+        address wallet,
+        uint256 transactionVolume,
+        uint256 loanHistory,
+        uint256 liquidityProvision,
+        uint256 protocolDiversity,
+        uint256 governanceScore,
+        uint256 accountAge
+    ) external {
+        if (!authorizedUpdaters[msg.sender]) revert Unauthorized();
+        if (transactionVolume > 100 || loanHistory > 100 || liquidityProvision > 100 ||
+            protocolDiversity > 100 || governanceScore > 100 || accountAge > 100) {
+            revert InvalidScore();
+        }
+
+        ReputationScore storage score = reputationScores[wallet];
+        score.transactionVolume = transactionVolume;
+        score.loanHistory = loanHistory;
+        score.liquidityProvision = liquidityProvision;
+        score.protocolDiversity = protocolDiversity;
+        score.governanceScore = governanceScore;
+        score.accountAge = accountAge;
+        score.lastUpdated = block.timestamp;
+
+        // Calculate total score (0-1000)
+        uint256 totalScore = _calculateTotalScore(
+            transactionVolume,
+            loanHistory,
+            liquidityProvision,
+            protocolDiversity,
+            governanceScore,
+            accountAge
+        );
+        
+        score.totalScore = totalScore;
+        score.reputationLevel = _calculateReputationLevel(totalScore);
+
+        emit ReputationUpdated(wallet, totalScore, score.reputationLevel);
+    }
+
+    /**
+     * @notice Calculate total reputation score based on weighted components
+     * @return Total score (0-1000)
+     */
+    function _calculateTotalScore(
+        uint256 transactionVolume,
+        uint256 loanHistory,
+        uint256 liquidityProvision,
+        uint256 protocolDiversity,
+        uint256 governanceScore,
+        uint256 accountAge
+    ) internal pure returns (uint256) {
+        uint256 total = 0;
+        total += (transactionVolume * WEIGHT_TRANSACTION_VOLUME) / 10000;
+        total += (loanHistory * WEIGHT_LOAN_HISTORY) / 10000;
+        total += (liquidityProvision * WEIGHT_LIQUIDITY) / 10000;
+        total += (protocolDiversity * WEIGHT_PROTOCOL_DIVERSITY) / 10000;
+        total += (governanceScore * WEIGHT_GOVERNANCE) / 10000;
+        total += (accountAge * WEIGHT_ACCOUNT_AGE) / 10000;
+        
+        return (total * 10); // Scale to 0-1000
+    }
+
+    /**
+     * @notice Calculate reputation level from total score
+     * @param totalScore Total reputation score (0-1000)
+     * @return Reputation level (0-10)
+     */
+    function _calculateReputationLevel(uint256 totalScore) internal pure returns (uint256) {
+        if (totalScore >= 900) return 10;
+        if (totalScore >= 800) return 9;
+        if (totalScore >= 700) return 8;
+        if (totalScore >= 600) return 7;
+        if (totalScore >= 500) return 6;
+        if (totalScore >= 400) return 5;
+        if (totalScore >= 300) return 4;
+        if (totalScore >= 200) return 3;
+        if (totalScore >= 100) return 2;
+        if (totalScore > 0) return 1;
+        return 0;
+    }
+
+    /**
+     * @notice Get reputation score for a wallet
+     * @param wallet Wallet address
+     * @return Reputation score struct
+     */
+    function getReputationScore(address wallet) external view returns (ReputationScore memory) {
+        return reputationScores[wallet];
+    }
+
+    /**
+     * @notice Verify reputation level for protocol integration
+     * @param wallet Wallet address
+     * @return level Reputation level (0-10)
+     * @return score Total reputation score (0-1000)
+     */
+    function verifyReputation(address wallet) external view returns (uint256 level, uint256 score) {
+        if (!integratedProtocols[msg.sender] && msg.sender != owner()) {
+            revert ProtocolNotIntegrated();
+        }
+        
+        ReputationScore memory rep = reputationScores[wallet];
+        return (rep.reputationLevel, rep.totalScore);
+    }
+
+    /**
+     * @notice Get reputation multiplier for rewards (100 = 1x, 200 = 2x, etc.)
+     * @param wallet Wallet address
+     * @return Multiplier in basis points
+     */
+    function getReputationMultiplier(address wallet) external view returns (uint256) {
+        uint256 level = reputationScores[wallet].reputationLevel;
+        // Level 0 = 100 (1x), Level 10 = 200 (2x)
+        return 100 + (level * 10);
+    }
+
+    /**
+     * @notice Check if wallet qualifies for undercollateralized loans
+     * @param wallet Wallet address
+     * @return qualified True if reputation level >= 7
+     */
+    function qualifiesForUndercollateralizedLoan(address wallet) external view returns (bool) {
+        return reputationScores[wallet].reputationLevel >= 7;
+    }
+
+    /**
+     * @notice Get suggested interest rate discount based on reputation
+     * @param wallet Wallet address
+     * @return Discount in basis points (e.g., 100 = 1% discount)
+     */
+    function getInterestRateDiscount(address wallet) external view returns (uint256) {
+        uint256 level = reputationScores[wallet].reputationLevel;
+        // Level 0 = 0%, Level 10 = 5%
+        return level * 50; // 50 basis points per level
     }
 
     // ============ Metadata Functions ============
@@ -251,6 +436,16 @@ contract CharaNFT is ERC721A, Ownable, ReentrancyGuard {
     function setAuthorizedUpdater(address updater, bool status) external onlyOwner {
         authorizedUpdaters[updater] = status;
         emit UpdaterAuthorized(updater, status);
+    }
+
+    /**
+     * @notice Integrate/remove protocol for reputation verification
+     * @param protocol Protocol address
+     * @param status Integration status
+     */
+    function setIntegratedProtocol(address protocol, bool status) external onlyOwner {
+        integratedProtocols[protocol] = status;
+        emit ProtocolIntegrated(protocol, status);
     }
 
     /**
