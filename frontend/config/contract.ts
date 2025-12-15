@@ -72,6 +72,49 @@ export const CONTRACT_ABI = [
     "type": "function"
   },
   {
+    "inputs": [{ "internalType": "address", "name": "wallet", "type": "address" }],
+    "name": "getReputationScore",
+    "outputs": [{
+      "components": [
+        { "internalType": "uint256", "name": "transactionVolume", "type": "uint256" },
+        { "internalType": "uint256", "name": "loanHistory", "type": "uint256" },
+        { "internalType": "uint256", "name": "liquidityProvision", "type": "uint256" },
+        { "internalType": "uint256", "name": "protocolDiversity", "type": "uint256" },
+        { "internalType": "uint256", "name": "governanceScore", "type": "uint256" },
+        { "internalType": "uint256", "name": "accountAge", "type": "uint256" },
+        { "internalType": "uint256", "name": "totalScore", "type": "uint256" },
+        { "internalType": "uint256", "name": "reputationLevel", "type": "uint256" },
+        { "internalType": "uint256", "name": "lastUpdated", "type": "uint256" }
+      ],
+      "internalType": "struct CharaNFT.ReputationScore",
+      "name": "",
+      "type": "tuple"
+    }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "wallet", "type": "address" }],
+    "name": "getReputationMultiplier",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "wallet", "type": "address" }],
+    "name": "getInterestRateDiscount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "wallet", "type": "address" }],
+    "name": "qualifiesForUndercollateralizedLoan",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "anonymous": false,
     "inputs": [
       { "indexed": true, "internalType": "address", "name": "minter", "type": "address" },
