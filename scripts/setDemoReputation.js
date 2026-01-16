@@ -2,7 +2,13 @@ const hre = require("hardhat");
 
 async function main() {
   // Get the deployed contract address
-  const contractAddress = process.env.CONTRACT_ADDRESS || "YOUR_CONTRACT_ADDRESS";
+  const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+  
+  if (!contractAddress || contractAddress === '0x0000000000000000000000000000000000000000') {
+    console.error("❌ Contract address not set in .env");
+    console.log("   Please set NEXT_PUBLIC_CONTRACT_ADDRESS");
+    process.exit(1);
+  }
   
   console.log("Setting demo reputation scores...");
   console.log("Contract:", contractAddress);
