@@ -5,6 +5,9 @@ import { ethers } from 'ethers'
 import { TrendingUp, Award, Shield, Zap, Target, Clock } from 'lucide-react'
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/config/contract'
 import { ActivityFeed } from './ActivityFeed'
+import { Achievements } from './Achievements'
+import { Analytics } from './Analytics'
+import { Leaderboard } from './Leaderboard'
 
 declare global {
   interface Window {
@@ -268,6 +271,20 @@ export function ReputationDashboard() {
 
           {/* Activity Feed */}
           <ActivityFeed address={address} />
+        </div>
+
+        {/* Achievements Section */}
+        <div className="mt-8">
+          <Achievements reputation={reputation} activityCount={1} />
+        </div>
+
+        {/* Analytics and Leaderboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          <Analytics reputation={reputation} />
+          <Leaderboard 
+            currentUserAddress={address}
+            currentUserScore={reputation?.totalScore}
+          />
         </div>
       </div>
     </section>
