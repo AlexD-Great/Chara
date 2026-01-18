@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { Navbar } from '../components/Navbar'
 import { Hero } from '../components/Hero'
 import { MintSection } from '../components/MintSection'
-import { ReputationDashboard } from '../components/ReputationDashboard'
+import { ReputationSection } from '../components/ReputationSection'
+import { ProtocolShowcase } from '../components/ProtocolShowcase'
 import { Features } from '../components/Features'
 import { Footer } from '../components/Footer'
 
@@ -22,7 +23,8 @@ export default function Home() {
       <Navbar />
       <Hero />
       <MintSection />
-      <ReputationDashboard />
+      <ReputationSection />
+      <ProtocolShowcase />
       <Features />
       <Footer />
     </main>
