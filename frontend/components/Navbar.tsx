@@ -40,11 +40,11 @@ export function Navbar() {
         setAddress(accounts[0])
         setIsConnected(true)
         
-        // Switch to localhost network
+        // Switch to Polygon Amoy testnet
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x7A69' }], // 31337 in hex
+            params: [{ chainId: '0x13882' }], // 80002 in hex
           })
         } catch (switchError: any) {
           // If network doesn't exist, add it
@@ -52,14 +52,18 @@ export function Navbar() {
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
               params: [{
-                chainId: '0x7A69',
-                chainName: 'Hardhat Local',
+                chainId: '0x13882',
+                chainName: 'Polygon Amoy Testnet',
                 nativeCurrency: {
-                  name: 'Ether',
-                  symbol: 'ETH',
+                  name: 'POL',
+                  symbol: 'POL',
                   decimals: 18
                 },
-                rpcUrls: ['http://127.0.0.1:8545'],
+                rpcUrls: ['https://rpc-amoy.polygon.technology'],
+                blockExplorers: [{
+                  name: 'PolygonScan',
+                  url: 'https://amoy.polygonscan.com'
+                }]
               }],
             })
           }

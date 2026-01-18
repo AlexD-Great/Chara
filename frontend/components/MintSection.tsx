@@ -135,25 +135,29 @@ export function MintSection() {
         setAddress(accounts[0])
         setIsConnected(true)
         
-        // Switch to localhost network
+        // Switch to Polygon Amoy testnet
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x7A69' }], // 31337 in hex
+            params: [{ chainId: '0x13882' }], // 80002 in hex
           })
         } catch (switchError: any) {
           if (switchError.code === 4902) {
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
               params: [{
-                chainId: '0x7A69',
-                chainName: 'Hardhat Local',
+                chainId: '0x13882',
+                chainName: 'Polygon Amoy Testnet',
                 nativeCurrency: {
-                  name: 'Ether',
-                  symbol: 'ETH',
+                  name: 'POL',
+                  symbol: 'POL',
                   decimals: 18
                 },
-                rpcUrls: ['http://127.0.0.1:8545'],
+                rpcUrls: ['https://rpc-amoy.polygon.technology'],
+                blockExplorers: [{
+                  name: 'PolygonScan',
+                  url: 'https://amoy.polygonscan.com'
+                }]
               }],
             })
           }
@@ -186,7 +190,7 @@ export function MintSection() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-purple-600/10 rounded-lg p-4 border border-purple-500/20">
               <div className="text-white/60 text-sm mb-1">Mint Price</div>
-              <div className="text-2xl font-bold text-white">{mintPrice} ETH</div>
+              <div className="text-2xl font-bold text-white">{mintPrice} POL</div>
             </div>
             <div className="bg-purple-600/10 rounded-lg p-4 border border-purple-500/20">
               <div className="text-white/60 text-sm mb-1">Minted</div>
@@ -284,7 +288,7 @@ export function MintSection() {
           {/* Info */}
           <div className="mt-6 text-center text-white/50 text-sm">
             <p>Contract: {CONTRACT_ADDRESS.slice(0, 6)}...{CONTRACT_ADDRESS.slice(-4)}</p>
-            <p className="mt-1">Network: Hardhat Local (Chain ID: 31337)</p>
+            <p className="mt-1">Network: Polygon Amoy Testnet (Chain ID: 80002)</p>
           </div>
         </div>
       </div>
