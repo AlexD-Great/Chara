@@ -42,10 +42,27 @@ Chara is a reputation-based NFT platform that transforms your on-chain activity 
 ```
 chara/
 ├── contracts/          # Smart contracts (Hardhat)
+│   └── CharaNFT.sol   # Soulbound NFT with reputation system
 ├── frontend/          # Next.js minting dApp
-├── backend/           # Event listener & metadata updater
+│   ├── components/    # React components (Navbar, Hero, ReputationDashboard)
+│   └── config/        # Contract ABI and configuration
+├── backend/           # Activity monitoring & reputation updates
+│   └── services/      # Event listener & activity analyzer
+├── sdk/               # Protocol integration SDK
+│   ├── CharaSDK.js    # JavaScript SDK for protocols
+│   └── examples/      # Integration examples (Lending, DEX, Yield)
 └── scripts/           # Deployment & utility scripts
 ```
+
+### Production-Ready Activity Tracking
+
+The backend monitors real DeFi activity on Polygon and automatically updates reputation scores:
+
+- **Real-Time Monitoring**: Scans every block for DeFi transactions
+- **Protocol Detection**: Identifies swaps, LP positions, loans, and governance votes
+- **Automatic Updates**: Updates on-chain reputation scores every 60 seconds
+- **Multi-Protocol Support**: Tracks QuickSwap, Aave, Uniswap V3, and more
+- **REST API**: Provides activity data to frontend and external integrations
 
 ## 🚀 Quick Start
 
@@ -82,6 +99,26 @@ npm run dev
 ```
 
 Visit `http://localhost:3000` to see the minting interface.
+
+### Backend Activity Monitor
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+The backend will:
+- Monitor Polygon Amoy blockchain for DeFi activity
+- Track swaps, LP positions, loans, and governance votes
+- Automatically update reputation scores every 60 seconds
+- Expose REST API at `http://localhost:3001`
+
+**API Endpoints:**
+- `GET /api/wallet/:address/activity` - Get wallet activity metrics
+- `POST /api/wallet/:address/monitor` - Add wallet to monitoring
+- `GET /api/monitored-wallets` - List all monitored wallets
+- `POST /api/update-scores` - Trigger reputation score update
 
 ## 📝 Smart Contract
 
@@ -139,19 +176,24 @@ Your Chara score is calculated based on:
 - Frontend minting interface
 - Comprehensive test suite
 
-### Phase 2: Reputation System (In Progress)
-- Credit scoring algorithm implementation
-- Multi-factor reputation calculation
-- Risk assessment engine
+### Phase 2: Reputation System ✅
+- Multi-factor reputation scoring algorithm
+- Credit score calculation (0-1000 points)
+- Reputation levels (0-10)
 - Real-time score updates
-- Reputation verification API
+- Reputation verification API for protocols
+- Interest rate discount calculation
+- Reward multiplier system
+- Undercollateralized loan qualification
 
-### Phase 3: Protocol Integrations
-- Chara SDK for easy integration
-- Lending protocol integration (tiered interest rates)
-- DEX integration (fee discounts)
-- Yield farming integration (bonus multipliers)
-- Example implementations and documentation
+### Phase 3: Protocol Integrations ✅
+- Chara SDK JavaScript library
+- Smart contract integration interfaces
+- Lending protocol example (tiered interest rates)
+- DEX integration example (fee discounts)
+- Yield farming example (bonus rewards)
+- Comprehensive SDK documentation
+- Protocol integration management
 
 ### Phase 4: Advanced Features
 - Achievement badge system
