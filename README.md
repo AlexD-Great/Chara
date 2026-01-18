@@ -195,12 +195,12 @@ Your Chara score is calculated based on:
 - Comprehensive SDK documentation
 - Protocol integration management
 
-### Phase 4: Advanced Features
-- Achievement badge system
-- Governance voting weight based on reputation
-- Cross-chain reputation bridging
-- Reputation staking and delegation
-- Advanced analytics dashboard
+### Phase 4: Advanced Features ✅
+- Achievement badge system (12 unlockable badges)
+- Reputation analytics dashboard with charts
+- Leaderboard system with categories
+- Protocol integration showcase
+- Activity feed with real-time updates
 
 ### Phase 5: Ecosystem Expansion
 - Partnership with major Polygon protocols
@@ -236,7 +236,7 @@ Your Chara score is calculated based on:
 
 - **Live Demo**: https://chara-one.vercel.app/
 - **GitHub**: https://github.com/AlexD-Great/Chara
-- **Contract**: Polygon Amoy Testnet
+- **Contract**: [0x5239ad0C0872E9ECB3b8fcd0aB5418C7015C0978](https://amoy.polygonscan.com/address/0x5239ad0C0872E9ECB3b8fcd0aB5418C7015C0978)
 - **Documentation**: Coming soon
 
 ## 📜 License

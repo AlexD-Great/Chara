@@ -50,6 +50,14 @@ async function main() {
   console.log(`[${bar}]`);
   console.log("");
 
+  // Check specific wallet
+  const walletToCheck = "0x774A693E52e6882b10f739bB7b84b3F4438ADb4B";
+  const walletMinted = await contract.numberMinted(walletToCheck);
+  console.log(`\n👤 Wallet ${walletToCheck.slice(0,6)}...${walletToCheck.slice(-4)}:`);
+  console.log(`   Already Minted: ${walletMinted.toString()}`);
+  console.log(`   Can Mint More: ${Number(walletMinted) < 1 ? '✅ Yes' : '❌ No (max 1 per wallet)'}`);
+  console.log("");
+
   // Explorer link
   if (hre.network.name === "polygon_amoy") {
     console.log(`🔍 View on Explorer:`);
