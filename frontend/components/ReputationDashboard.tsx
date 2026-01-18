@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { TrendingUp, Award, Shield, Zap, Target, Clock } from 'lucide-react'
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/config/contract'
+import { ActivityFeed } from './ActivityFeed'
 
 declare global {
   interface Window {
@@ -239,28 +240,34 @@ export function ReputationDashboard() {
           </div>
         </div>
 
-        {/* Score Breakdown */}
-        <div className="glass rounded-2xl p-8 border border-white/10">
-          <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <Target className="w-6 h-6 text-purple-400" />
-            Score Breakdown
-          </h3>
-          
-          <div className="space-y-4">
-            <ScoreBar label="Transaction Volume" value={reputation?.transactionVolume || 0} weight={20} />
-            <ScoreBar label="Loan History" value={reputation?.loanHistory || 0} weight={25} />
-            <ScoreBar label="Liquidity Provision" value={reputation?.liquidityProvision || 0} weight={20} />
-            <ScoreBar label="Protocol Diversity" value={reputation?.protocolDiversity || 0} weight={15} />
-            <ScoreBar label="Governance" value={reputation?.governanceScore || 0} weight={10} />
-            <ScoreBar label="Account Age" value={reputation?.accountAge || 0} weight={10} />
+        {/* Score Breakdown and Activity Feed Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Score Breakdown */}
+          <div className="glass rounded-2xl p-8 border border-white/10">
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <Target className="w-6 h-6 text-purple-400" />
+              Score Breakdown
+            </h3>
+            
+            <div className="space-y-4">
+              <ScoreBar label="Transaction Volume" value={reputation?.transactionVolume || 0} weight={20} />
+              <ScoreBar label="Loan History" value={reputation?.loanHistory || 0} weight={25} />
+              <ScoreBar label="Liquidity Provision" value={reputation?.liquidityProvision || 0} weight={20} />
+              <ScoreBar label="Protocol Diversity" value={reputation?.protocolDiversity || 0} weight={15} />
+              <ScoreBar label="Governance" value={reputation?.governanceScore || 0} weight={10} />
+              <ScoreBar label="Account Age" value={reputation?.accountAge || 0} weight={10} />
+            </div>
+
+            {reputation?.lastUpdated && reputation.lastUpdated > 0 && (
+              <div className="mt-6 pt-6 border-t border-white/10 flex items-center gap-2 text-white/50 text-sm">
+                <Clock className="w-4 h-4" />
+                Last updated: {new Date(reputation.lastUpdated * 1000).toLocaleDateString()}
+              </div>
+            )}
           </div>
 
-          {reputation?.lastUpdated && reputation.lastUpdated > 0 && (
-            <div className="mt-6 pt-6 border-t border-white/10 flex items-center gap-2 text-white/50 text-sm">
-              <Clock className="w-4 h-4" />
-              Last updated: {new Date(reputation.lastUpdated * 1000).toLocaleDateString()}
-            </div>
-          )}
+          {/* Activity Feed */}
+          <ActivityFeed address={address} />
         </div>
       </div>
     </section>
