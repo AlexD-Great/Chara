@@ -51,6 +51,13 @@ export function MintSection() {
   const loadContractData = async () => {
     if (typeof window.ethereum !== 'undefined') {
       try {
+        // Validate contract address
+        if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS === '0x0000000000000000000000000000000000000000') {
+          console.error('Contract address not configured')
+          alert('Contract address not configured. Please check environment variables.')
+          return
+        }
+
         const provider = new ethers.BrowserProvider(window.ethereum)
         const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
         
@@ -65,8 +72,11 @@ export function MintSection() {
         setTotalMinted(Number(minted))
         setMaxSupply(Number(supply))
         setMintingActive(active)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading contract data:', error)
+        if (error.code === 'BAD_DATA') {
+          alert('Failed to connect to contract. Please ensure you are on Polygon Amoy testnet.')
+        }
       }
     }
   }
