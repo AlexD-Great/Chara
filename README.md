@@ -161,53 +161,66 @@ Your Chara score is calculated based on:
 - **Transaction Volume** (20%): Total value of DeFi interactions
 - **Loan History** (25%): Repayment record and borrowing patterns
 - **Liquidity Provision** (20%): LP duration, size, and impermanent loss management
-- **Protocol Diversity** (15%): Engagement across multiple protocols
+- **Protocol Diversity** (15%): Engagement across multiple DeFi protocols
 - **Governance Participation** (10%): Voting and proposal activity
 - **Account Age** (10%): Time since first on-chain activity
 
-**Score Range**: 0-1000 points across 10 reputation levels
+## 🗺️ Roadmap
 
-## � Roadmap
+### Phase 1: Sprint to Funding (Wave 1–5) ✅
 
-### Phase 1: Core Infrastructure ✅
-- Soulbound NFT smart contract with ERC-721A
-- Dynamic metadata and evolution system
-- Basic activity tracking
-- Frontend minting interface
+**Wave 1-2: Foundation & Setup** ✅
+- Polygon Amoy testnet integration
+- Soulbound NFT smart contract (ERC-721A)
+- Dynamic metadata system
+- Frontend minting interface with wallet connection
+- Product-market fit validation (DeFi reputation problem)
 - Comprehensive test suite
 
-### Phase 2: Reputation System ✅
-- Multi-factor reputation scoring algorithm
-- Credit score calculation (0-1000 points)
-- Reputation levels (0-10)
-- Real-time score updates
-- Reputation verification API for protocols
-- Interest rate discount calculation
-- Reward multiplier system
-- Undercollateralized loan qualification
+**Wave 3-4: Build & Optimize** ✅
+- Multi-factor reputation scoring (6 components)
+- 10-level reputation system (Newcomer to Legend)
+- Backend API for activity monitoring
+- Chara SDK for protocol integration
+- 3 integration examples (Lending, DEX, Yield Farm)
+- Achievement system (12 badges)
+- Analytics dashboard and leaderboard
+- Protocol showcase interface
+- User acquisition strategy (beta testing program)
 
-### Phase 3: Protocol Integrations ✅
-- Chara SDK JavaScript library
-- Smart contract integration interfaces
-- Lending protocol example (tiered interest rates)
-- DEX integration example (fee discounts)
-- Yield farming example (bonus rewards)
-- Comprehensive SDK documentation
-- Protocol integration management
+**Wave 5: Pitch & Raise** 🎯
+- Demo presentation preparation
+- VC meeting materials
+- Beta tester feedback collection
+- Funding round execution
+- Deployment optimization
 
-### Phase 4: Advanced Features ✅
-- Achievement badge system (12 unlockable badges)
-- Reputation analytics dashboard with charts
-- Leaderboard system with categories
-- Protocol integration showcase
-- Activity feed with real-time updates
+### Phase 2: Scale & Expand (Wave 6–10)
 
-### Phase 5: Ecosystem Expansion
-- Partnership with major Polygon protocols
-- Community governance DAO
-- Reputation marketplace (view-only)
-- Mobile application
-- Multi-chain deployment (zkEVM, other L2s)
+**Wave 6-7: Mainnet Launch & Partnerships**
+- Polygon mainnet deployment
+- Onboard 5-10 DeFi protocol partners
+- Real-world activity tracking integration
+- Protocol partner analytics dashboard
+- Achieve 500+ reputation NFT holders
+- First protocol integrations live
+
+**Wave 8-9: Multi-Chain & Advanced Features**
+- Deploy to Arbitrum, Optimism, Base
+- Cross-chain reputation aggregation
+- Enhanced credit scoring models
+- DAO governance for reputation parameters
+- Mobile SDK and wallet integration
+- Insurance protocol integration
+- Reputation-based undercollateralized lending live
+
+**Wave 10: Ecosystem Maturity**
+- 50+ integrated protocols across chains
+- 10,000+ active reputation holders
+- Reputation marketplace launch
+- Advanced analytics for protocols
+- Community-driven governance active
+- Establish Chara as DeFi reputation standard
 
 ## 💼 Use Cases
 
