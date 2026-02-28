@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
-import { TrendingUp, Award, Shield, Zap, Target, Clock } from 'lucide-react'
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/config/contract'
+import { Shield, TrendingUp, Target, Clock } from 'lucide-react'
+import { CONTRACT_ADDRESS, CONTRACT_ABI, HAS_CONTRACT_CONFIG } from '@/config/contract'
 import { ActivityFeed } from './ActivityFeed'
 import { Achievements } from './Achievements'
 import { Analytics } from './Analytics'
@@ -27,282 +27,199 @@ interface ReputationScore {
   lastUpdated: number
 }
 
+const LEVELS = ['Newcomer', 'Explorer', 'Participant', 'Contributor', 'Active User', 'Engaged Member', 'Trusted User', 'Veteran', 'Expert', 'Master', 'Legend']
+
 export function ReputationDashboard() {
-  const [address, setAddress] = useState<string>('')
+  const [address, setAddress] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [reputation, setReputation] = useState<ReputationScore | null>(null)
-  const [multiplier, setMultiplier] = useState<number>(100)
-  const [interestDiscount, setInterestDiscount] = useState<number>(0)
-  const [qualifiesForLoan, setQualifiesForLoan] = useState<boolean>(false)
+  const [multiplier, setMultiplier] = useState(100)
+  const [interestDiscount, setInterestDiscount] = useState(0)
+  const [qualifiesForLoan, setQualifiesForLoan] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [activityCount, setActivityCount] = useState(0)
+  const [error, setError] = useState('')
+
+  const checkConnection = async () => {
+    if (!window.ethereum) return
+    const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+    if (accounts.length) {
+      setAddress(accounts[0])
+      setIsConnected(true)
+    }
+  }
+
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      setError('MetaMask not detected.')
+      return
+    }
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+    setAddress(accounts[0])
+    setIsConnected(true)
+  }
+
+  const loadReputationData = useCallback(async () => {
+    if (!window.ethereum) return
+    setLoading(true)
+    setError('')
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
+      const [score, mult, discount, qualifies] = await Promise.all([
+        contract.getReputationScore(address),
+        contract.getReputationMultiplier(address),
+        contract.getInterestRateDiscount(address),
+        contract.qualifiesForUndercollateralizedLoan(address)
+      ])
+
+      setReputation({
+        transactionVolume: Number(score.transactionVolume),
+        loanHistory: Number(score.loanHistory),
+        liquidityProvision: Number(score.liquidityProvision),
+        protocolDiversity: Number(score.protocolDiversity),
+        governanceScore: Number(score.governanceScore),
+        accountAge: Number(score.accountAge),
+        totalScore: Number(score.totalScore),
+        reputationLevel: Number(score.reputationLevel),
+        lastUpdated: Number(score.lastUpdated)
+      })
+      setMultiplier(Number(mult))
+      setInterestDiscount(Number(discount))
+      setQualifiesForLoan(Boolean(qualifies))
+    } catch (err: any) {
+      setError(err.message || 'Unable to load reputation data')
+    } finally {
+      setLoading(false)
+    }
+  }, [address])
+
+  const handleActivityLoaded = useCallback((payload: { activityCount: number }) => {
+    setActivityCount(payload.activityCount)
+  }, [])
 
   useEffect(() => {
     checkConnection()
   }, [])
 
   useEffect(() => {
-    if (address) {
+    if (address && HAS_CONTRACT_CONFIG) {
       loadReputationData()
     }
-  }, [address])
+  }, [address, loadReputationData])
 
-  const checkConnection = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' })
-        if (accounts.length > 0) {
-          setAddress(accounts[0])
-          setIsConnected(true)
-        }
-      } catch (error) {
-        console.error('Error checking connection:', error)
-      }
-    }
-  }
-
-  const loadReputationData = async () => {
-    if (typeof window.ethereum !== 'undefined' && address) {
-      setLoading(true)
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum)
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
-        
-        const [score, mult, discount, qualifies] = await Promise.all([
-          contract.getReputationScore(address),
-          contract.getReputationMultiplier(address),
-          contract.getInterestRateDiscount(address),
-          contract.qualifiesForUndercollateralizedLoan(address)
-        ])
-        
-        setReputation({
-          transactionVolume: Number(score.transactionVolume),
-          loanHistory: Number(score.loanHistory),
-          liquidityProvision: Number(score.liquidityProvision),
-          protocolDiversity: Number(score.protocolDiversity),
-          governanceScore: Number(score.governanceScore),
-          accountAge: Number(score.accountAge),
-          totalScore: Number(score.totalScore),
-          reputationLevel: Number(score.reputationLevel),
-          lastUpdated: Number(score.lastUpdated)
-        })
-        
-        setMultiplier(Number(mult))
-        setInterestDiscount(Number(discount))
-        setQualifiesForLoan(qualifies)
-      } catch (error) {
-        console.error('Error loading reputation:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-  }
-
-  const getLevelName = (level: number): string => {
-    const levels = ['Newcomer', 'Explorer', 'Participant', 'Contributor', 'Active User', 
-                    'Engaged Member', 'Trusted User', 'Veteran', 'Expert', 'Master', 'Legend']
-    return levels[level] || 'Unknown'
-  }
-
-  const getLevelColor = (level: number): string => {
-    if (level >= 9) return 'from-yellow-400 to-orange-500'
-    if (level >= 7) return 'from-purple-400 to-pink-500'
-    if (level >= 5) return 'from-blue-400 to-cyan-500'
-    if (level >= 3) return 'from-green-400 to-emerald-500'
-    return 'from-gray-400 to-gray-500'
-  }
-
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        })
-        setAddress(accounts[0])
-        setIsConnected(true)
-      } catch (error) {
-        console.error('Error connecting wallet:', error)
-      }
-    }
-  }
-
-  if (!isConnected) {
+  if (!HAS_CONTRACT_CONFIG) {
     return (
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="glass rounded-2xl p-12 border border-white/10 text-center">
-            <Shield className="w-16 h-16 mx-auto mb-4 text-purple-400" />
-            <h2 className="text-3xl font-bold gradient-text mb-4">
-              Your Reputation Dashboard
-            </h2>
-            <p className="text-white/70 mb-8">
-              Connect your wallet to view your DeFi reputation score and unlock benefits
-            </p>
-            <button
-              onClick={connectWallet}
-              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg text-white font-semibold transition transform hover:scale-105"
-            >
-              Connect Wallet
-            </button>
-          </div>
+      <section id="dashboard" className="py-14 px-4">
+        <div className="max-w-6xl mx-auto glass rounded-2xl p-8 border border-cyan-100/15">
+          <h2 className="text-3xl font-bold">Reputation Dashboard</h2>
+          <p className="text-slate-200/75 mt-2">Set `NEXT_PUBLIC_CONTRACT_ADDRESS` in your frontend environment to enable live contract reads.</p>
         </div>
       </section>
     )
   }
 
-  if (loading) {
+  if (!isConnected) {
     return (
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="glass rounded-2xl p-12 border border-white/10 text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500 mx-auto mb-4"></div>
-            <p className="text-white/70">Loading your reputation...</p>
-          </div>
+      <section id="dashboard" className="py-14 px-4">
+        <div className="max-w-6xl mx-auto glass rounded-2xl p-10 text-center border border-cyan-100/15 reveal">
+          <Shield className="w-12 h-12 mx-auto text-cyan-200 mb-3" />
+          <h2 className="text-4xl font-bold">Reputation Dashboard</h2>
+          <p className="text-slate-200/75 mt-2 mb-6">Connect your wallet to load your on-chain reputation profile.</p>
+          <button onClick={connectWallet} className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-300 to-emerald-300 text-slate-950 font-bold">
+            Connect Wallet
+          </button>
+          {error && <p className="text-red-200 text-sm mt-3">{error}</p>}
         </div>
       </section>
     )
   }
 
   return (
-    <section className="py-20 px-4">
+    <section id="dashboard" className="py-14 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold gradient-text mb-4">
-            Reputation Dashboard
-          </h2>
-          <p className="text-white/70">
-            Your on-chain reputation unlocks better rates and exclusive benefits
-          </p>
+        <div className="mb-8">
+          <h2 className="text-4xl font-bold">Reputation Dashboard</h2>
+          <p className="text-slate-200/75 mt-2">Track score, rewards, and live protocol activity for {address.slice(0, 6)}...{address.slice(-4)}.</p>
         </div>
 
-        {/* Main Score Card */}
-        <div className="glass rounded-2xl p-8 border border-white/10 mb-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex-1 text-center md:text-left">
-              <div className="text-white/60 text-sm mb-2">Reputation Level</div>
-              <div className={`text-5xl font-bold bg-gradient-to-r ${getLevelColor(reputation?.reputationLevel || 0)} bg-clip-text text-transparent mb-2`}>
-                {getLevelName(reputation?.reputationLevel || 0)}
-              </div>
-              <div className="text-white/50 text-sm">Level {reputation?.reputationLevel || 0} / 10</div>
+        {loading && <div className="glass rounded-2xl p-6 mb-6">Loading reputation data...</div>}
+        {error && !loading && <div className="glass rounded-2xl p-6 mb-6 text-red-200">{error}</div>}
+
+        <div className="glass rounded-2xl p-7 mb-6 border border-cyan-100/15">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Metric title="Level" value={LEVELS[reputation?.reputationLevel || 0]} subtitle={`Level ${reputation?.reputationLevel || 0} / 10`} />
+            <Metric title="Multiplier" value={`${(multiplier / 100).toFixed(1)}x`} subtitle="Rewards boost" />
+            <Metric title="Interest Discount" value={`${(interestDiscount / 100).toFixed(2)}%`} subtitle={qualifiesForLoan ? 'Undercollateralized: eligible' : 'Undercollateralized: locked'} />
+          </div>
+
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-2 text-sm text-slate-300/75">
+              <span>Total Score</span>
+              <span>{reputation?.totalScore || 0} / 1000</span>
             </div>
-            
-            <div className="flex-1">
-              <div className="relative pt-1">
-                <div className="flex mb-2 items-center justify-between">
-                  <div className="text-white/60 text-sm">Total Score</div>
-                  <div className="text-white font-bold">{reputation?.totalScore || 0} / 1000</div>
-                </div>
-                <div className="overflow-hidden h-4 text-xs flex rounded-full bg-white/10">
-                  <div
-                    style={{ width: `${((reputation?.totalScore || 0) / 1000) * 100}%` }}
-                    className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r ${getLevelColor(reputation?.reputationLevel || 0)}`}
-                  ></div>
-                </div>
-              </div>
+            <div className="h-3 rounded-full bg-slate-900/65 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-cyan-300 to-emerald-300" style={{ width: `${((reputation?.totalScore || 0) / 1000) * 100}%` }} />
             </div>
+            {reputation?.lastUpdated ? (
+              <div className="mt-3 text-xs text-slate-300/70 inline-flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                Last updated {new Date(reputation.lastUpdated * 1000).toLocaleString()}
+              </div>
+            ) : null}
           </div>
         </div>
 
-        {/* Benefits Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="glass rounded-xl p-6 border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <TrendingUp className="w-8 h-8 text-green-400" />
-              <div>
-                <div className="text-white/60 text-sm">Reward Multiplier</div>
-                <div className="text-2xl font-bold text-white">{(multiplier / 100).toFixed(1)}x</div>
-              </div>
-            </div>
-            <p className="text-white/50 text-sm">Earn {multiplier - 100}% bonus on yields and rewards</p>
-          </div>
-
-          <div className="glass rounded-xl p-6 border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <Zap className="w-8 h-8 text-yellow-400" />
-              <div>
-                <div className="text-white/60 text-sm">Interest Discount</div>
-                <div className="text-2xl font-bold text-white">{(interestDiscount / 100).toFixed(2)}%</div>
-              </div>
-            </div>
-            <p className="text-white/50 text-sm">Save on borrowing costs with better rates</p>
-          </div>
-
-          <div className="glass rounded-xl p-6 border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <Shield className="w-8 h-8 text-blue-400" />
-              <div>
-                <div className="text-white/60 text-sm">Loan Access</div>
-                <div className="text-2xl font-bold text-white">
-                  {qualifiesForLoan ? '✅' : '❌'}
-                </div>
-              </div>
-            </div>
-            <p className="text-white/50 text-sm">
-              {qualifiesForLoan ? 'Qualified for undercollateralized loans' : 'Reach level 7 to unlock'}
-            </p>
-          </div>
-        </div>
-
-        {/* Score Breakdown and Activity Feed Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Score Breakdown */}
-          <div className="glass rounded-2xl p-8 border border-white/10">
-            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Target className="w-6 h-6 text-purple-400" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="glass rounded-2xl p-6 border border-cyan-100/15">
+            <h3 className="text-2xl font-bold mb-5 inline-flex items-center gap-2">
+              <Target className="w-5 h-5 text-cyan-200" />
               Score Breakdown
             </h3>
-            
-            <div className="space-y-4">
-              <ScoreBar label="Transaction Volume" value={reputation?.transactionVolume || 0} weight={20} />
-              <ScoreBar label="Loan History" value={reputation?.loanHistory || 0} weight={25} />
-              <ScoreBar label="Liquidity Provision" value={reputation?.liquidityProvision || 0} weight={20} />
-              <ScoreBar label="Protocol Diversity" value={reputation?.protocolDiversity || 0} weight={15} />
-              <ScoreBar label="Governance" value={reputation?.governanceScore || 0} weight={10} />
-              <ScoreBar label="Account Age" value={reputation?.accountAge || 0} weight={10} />
+            <div className="space-y-3">
+              <ScoreBar label="Transaction Volume" value={reputation?.transactionVolume || 0} />
+              <ScoreBar label="Loan History" value={reputation?.loanHistory || 0} />
+              <ScoreBar label="Liquidity Provision" value={reputation?.liquidityProvision || 0} />
+              <ScoreBar label="Protocol Diversity" value={reputation?.protocolDiversity || 0} />
+              <ScoreBar label="Governance" value={reputation?.governanceScore || 0} />
+              <ScoreBar label="Account Age" value={reputation?.accountAge || 0} />
             </div>
-
-            {reputation?.lastUpdated && reputation.lastUpdated > 0 && (
-              <div className="mt-6 pt-6 border-t border-white/10 flex items-center gap-2 text-white/50 text-sm">
-                <Clock className="w-4 h-4" />
-                Last updated: {new Date(reputation.lastUpdated * 1000).toLocaleDateString()}
-              </div>
-            )}
           </div>
-
-          {/* Activity Feed */}
-          <ActivityFeed address={address} />
+          <ActivityFeed address={address} onLoaded={handleActivityLoaded} />
         </div>
 
-        {/* Achievements Section */}
-        <div className="mt-8">
-          <Achievements reputation={reputation} activityCount={1} />
+        <div className="mt-6">
+          <Achievements reputation={reputation} activityCount={activityCount} />
         </div>
 
-        {/* Analytics and Leaderboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <Analytics reputation={reputation} />
-          <Leaderboard 
-            currentUserAddress={address}
-            currentUserScore={reputation?.totalScore}
-          />
+          <Leaderboard currentUserAddress={address} currentUserScore={reputation?.totalScore} />
         </div>
       </div>
     </section>
   )
 }
 
-function ScoreBar({ label, value, weight }: { label: string; value: number; weight: number }) {
+function Metric({ title, value, subtitle }: { title: string; value: string; subtitle: string }) {
+  return (
+    <div className="rounded-xl border border-cyan-100/15 bg-slate-900/35 p-4">
+      <div className="text-sm text-slate-300/70">{title}</div>
+      <div className="text-2xl font-semibold mt-1">{value}</div>
+      <div className="text-xs text-slate-300/70 mt-1">{subtitle}</div>
+    </div>
+  )
+}
+
+function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <div className="flex justify-between mb-2">
-        <span className="text-white/70 text-sm">{label}</span>
-        <span className="text-white text-sm font-semibold">{value}/100 ({weight}%)</span>
+      <div className="flex items-center justify-between text-sm mb-1">
+        <span className="text-slate-200/75">{label}</span>
+        <span>{value}/100</span>
       </div>
-      <div className="overflow-hidden h-3 text-xs flex rounded-full bg-white/10">
-        <div
-          style={{ width: `${value}%` }}
-          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-purple-500 to-pink-500"
-        ></div>
+      <div className="h-2.5 rounded-full bg-slate-900/65 overflow-hidden">
+        <div className="h-full bg-gradient-to-r from-cyan-300 to-emerald-300" style={{ width: `${value}%` }} />
       </div>
     </div>
   )

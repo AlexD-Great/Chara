@@ -58,3 +58,4 @@ deployments/
 .cache/
 temp/
 tmp/
+backend/data/

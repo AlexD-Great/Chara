@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
-import { Loader2, CheckCircle, XCircle, Sparkles } from 'lucide-react'
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/config/contract'
+import { Loader2, CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react'
+import { CONTRACT_ADDRESS, CONTRACT_ABI, HAS_CONTRACT_CONFIG } from '@/config/contract'
 
 declare global {
   interface Window {
@@ -11,297 +11,193 @@ declare global {
   }
 }
 
+type TxState = 'idle' | 'pending' | 'success' | 'error'
+
 export function MintSection() {
-  const [address, setAddress] = useState<string>('')
+  const [address, setAddress] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [isMinting, setIsMinting] = useState(false)
-  const [txHash, setTxHash] = useState<string>('')
-  const [mintPrice, setMintPrice] = useState<string>('0.001')
-  const [totalMinted, setTotalMinted] = useState<number>(0)
-  const [maxSupply, setMaxSupply] = useState<number>(10000)
-  const [mintingActive, setMintingActive] = useState<boolean>(true)
-  const [numberMinted, setNumberMinted] = useState<number>(0)
-  const [txStatus, setTxStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle')
+  const [txHash, setTxHash] = useState('')
+  const [mintPrice, setMintPrice] = useState('0')
+  const [totalMinted, setTotalMinted] = useState(0)
+  const [maxSupply, setMaxSupply] = useState(0)
+  const [mintingActive, setMintingActive] = useState(false)
+  const [numberMinted, setNumberMinted] = useState(0)
+  const [txState, setTxState] = useState<TxState>('idle')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     checkConnection()
-    loadContractData()
+    if (HAS_CONTRACT_CONFIG) loadContractData()
   }, [])
 
   useEffect(() => {
-    if (address) {
-      loadUserData()
+    if (address && HAS_CONTRACT_CONFIG) {
+      loadUserData(address)
     }
   }, [address])
 
   const checkConnection = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' })
-        if (accounts.length > 0) {
-          setAddress(accounts[0])
-          setIsConnected(true)
-        }
-      } catch (error) {
-        console.error('Error checking connection:', error)
-      }
+    if (!window.ethereum) return
+    const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+    if (accounts.length > 0) {
+      setAddress(accounts[0])
+      setIsConnected(true)
     }
   }
 
   const loadContractData = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        // Validate contract address
-        if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS === '0x0000000000000000000000000000000000000000') {
-          console.error('Contract address not configured')
-          alert('Contract address not configured. Please check environment variables.')
-          return
-        }
-
-        const provider = new ethers.BrowserProvider(window.ethereum)
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
-        
-        const [price, minted, supply, active] = await Promise.all([
-          contract.mintPrice(),
-          contract.totalMinted(),
-          contract.maxSupply(),
-          contract.mintingActive()
-        ])
-        
-        setMintPrice(ethers.formatEther(price))
-        setTotalMinted(Number(minted))
-        setMaxSupply(Number(supply))
-        setMintingActive(active)
-      } catch (error: any) {
-        console.error('Error loading contract data:', error)
-        if (error.code === 'BAD_DATA') {
-          alert('Failed to connect to contract. Please ensure you are on Polygon Amoy testnet.')
-        }
-      }
-    }
-  }
-
-  const loadUserData = async () => {
-    if (typeof window.ethereum !== 'undefined' && address) {
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum)
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
-        
-        const minted = await contract.numberMinted(address)
-        setNumberMinted(Number(minted))
-      } catch (error) {
-        console.error('Error loading user data:', error)
-      }
-    }
-  }
-
-  const handleMint = async () => {
-    if (!isConnected) {
-      alert('Please connect your wallet first!')
-      return
-    }
-
-    if (!mintingActive) {
-      alert('Minting is not active!')
-      return
-    }
-
     try {
-      setIsMinting(true)
-      setTxStatus('pending')
-      
+      const provider = window.ethereum
+        ? new ethers.BrowserProvider(window.ethereum)
+        : new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc-amoy.polygon.technology')
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
+      const [price, minted, supply, active] = await Promise.all([
+        contract.mintPrice(),
+        contract.totalMinted(),
+        contract.maxSupply(),
+        contract.mintingActive()
+      ])
+      setMintPrice(ethers.formatEther(price))
+      setTotalMinted(Number(minted))
+      setMaxSupply(Number(supply))
+      setMintingActive(Boolean(active))
+    } catch (err: any) {
+      setError(err.message || 'Failed to load contract')
+    }
+  }
+
+  const loadUserData = async (wallet: string) => {
+    try {
+      if (!window.ethereum) return
       const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
-      
-      const price = await contract.mintPrice()
-      const tx = await contract.mint({ value: price })
-      
-      setTxHash(tx.hash)
-      
-      await tx.wait()
-      
-      setTxStatus('success')
-      setIsMinting(false)
-      
-      // Reload data
-      await loadContractData()
-      await loadUserData()
-      
-    } catch (error: any) {
-      console.error('Mint error:', error)
-      setTxStatus('error')
-      setIsMinting(false)
-      alert(`Minting failed: ${error.message || 'Unknown error'}`)
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
+      const minted = await contract.numberMinted(wallet)
+      setNumberMinted(Number(minted))
+    } catch {
+      setNumberMinted(0)
     }
   }
 
   const connectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        })
-        setAddress(accounts[0])
-        setIsConnected(true)
-        
-        // Switch to Polygon Amoy testnet
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x13882' }], // 80002 in hex
-          })
-        } catch (switchError: any) {
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: '0x13882',
-                chainName: 'Polygon Amoy Testnet',
-                nativeCurrency: {
-                  name: 'POL',
-                  symbol: 'POL',
-                  decimals: 18
-                },
-                rpcUrls: ['https://rpc-amoy.polygon.technology'],
-                blockExplorers: [{
-                  name: 'PolygonScan',
-                  url: 'https://amoy.polygonscan.com'
-                }]
-              }],
-            })
-          }
-        }
-        
-        await loadUserData()
-      } catch (error) {
-        console.error('Error connecting wallet:', error)
-        alert('Please install MetaMask!')
-      }
-    } else {
-      alert('Please install MetaMask!')
+    if (!window.ethereum) {
+      setError('MetaMask is required for minting.')
+      return
+    }
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+    setAddress(accounts[0])
+    setIsConnected(true)
+    await loadUserData(accounts[0])
+  }
+
+  const handleMint = async () => {
+    if (!window.ethereum || !HAS_CONTRACT_CONFIG) return
+    try {
+      setIsMinting(true)
+      setTxState('pending')
+      setError('')
+
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
+      const price = await contract.mintPrice()
+      const tx = await contract.mint({ value: price })
+      setTxHash(tx.hash)
+      await tx.wait()
+
+      setTxState('success')
+      await loadContractData()
+      await loadUserData(address)
+    } catch (err: any) {
+      setTxState('error')
+      setError(err.reason || err.message || 'Mint failed')
+    } finally {
+      setIsMinting(false)
     }
   }
 
   return (
-    <section id="mint" className="py-20 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="glass rounded-2xl p-8 border border-white/10">
-          <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold gradient-text mb-4">
-              Mint Your Chara
-            </h2>
-            <p className="text-white/70">
-              Create your evolving digital identity on Polygon
-            </p>
+    <section id="mint" className="py-14 px-4">
+      <div className="max-w-5xl mx-auto">
+        <div className="glass rounded-3xl p-7 md:p-10 reveal reveal-delay-1">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-8">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-bold">
+                Mint <span className="gradient-text">Your Chara</span>
+              </h2>
+              <p className="text-slate-200/70 mt-2">One wallet. One soulbound identity. Live score updates.</p>
+            </div>
+            {HAS_CONTRACT_CONFIG ? (
+              <div className="text-sm text-slate-200/65">Polygon Amoy | Chain ID 80002</div>
+            ) : (
+              <div className="text-sm text-amber-200">Set `NEXT_PUBLIC_CONTRACT_ADDRESS` to enable minting.</div>
+            )}
           </div>
 
-          {/* Contract Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-purple-600/10 rounded-lg p-4 border border-purple-500/20">
-              <div className="text-white/60 text-sm mb-1">Mint Price</div>
-              <div className="text-2xl font-bold text-white">{mintPrice} POL</div>
-            </div>
-            <div className="bg-purple-600/10 rounded-lg p-4 border border-purple-500/20">
-              <div className="text-white/60 text-sm mb-1">Minted</div>
-              <div className="text-2xl font-bold text-white">{totalMinted} / {maxSupply}</div>
-            </div>
-            <div className="bg-purple-600/10 rounded-lg p-4 border border-purple-500/20">
-              <div className="text-white/60 text-sm mb-1">Status</div>
-              <div className="text-2xl font-bold text-white">
-                {mintingActive ? '✅ Active' : '❌ Inactive'}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-7">
+            <Stat label="Mint Price" value={`${mintPrice || '0'} POL`} />
+            <Stat label="Minted" value={`${totalMinted} / ${maxSupply || 0}`} />
+            <Stat label="Status" value={mintingActive ? 'Active' : 'Paused'} />
           </div>
 
-          {/* User Stats */}
           {isConnected && (
-            <div className="bg-blue-600/10 rounded-lg p-4 border border-blue-500/20 mb-6">
-              <div className="text-white/60 text-sm mb-1">Your Minted</div>
-              <div className="text-xl font-bold text-white">{numberMinted} Chara NFTs</div>
+            <div className="mb-6 p-4 rounded-xl border border-cyan-200/20 bg-cyan-200/5">
+              <div className="text-sm text-slate-300/80">Wallet</div>
+              <div className="font-semibold text-cyan-100">{address}</div>
+              <div className="text-sm text-slate-300/70 mt-1">Minted by this wallet: {numberMinted}</div>
             </div>
           )}
 
-          {/* Mint Button */}
           <div className="space-y-4">
             {!isConnected ? (
               <button
                 onClick={connectWallet}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg text-white font-semibold text-lg transition transform hover:scale-105 flex items-center justify-center space-x-2"
+                disabled={!HAS_CONTRACT_CONFIG}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-300 to-emerald-300 text-slate-950 font-bold disabled:opacity-60"
               >
-                <Sparkles className="w-5 h-5" />
-                <span>Connect Wallet to Mint</span>
+                Connect Wallet
               </button>
             ) : (
               <button
                 onClick={handleMint}
-                disabled={isMinting || !mintingActive}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg text-white font-semibold text-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
+                disabled={!HAS_CONTRACT_CONFIG || isMinting || !mintingActive}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-300 to-emerald-300 text-slate-950 font-bold disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                {isMinting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Minting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    <span>Mint Now</span>
-                  </>
-                )}
+                {isMinting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                {isMinting ? 'Minting...' : 'Mint Chara'}
               </button>
             )}
 
-            {/* Transaction Status */}
-            {txStatus === 'pending' && txHash && (
-              <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-4 flex items-start space-x-3">
-                <Loader2 className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-white font-semibold mb-1">Transaction Pending</div>
-                  <div className="text-white/60 text-sm break-all">
-                    Hash: {txHash}
-                  </div>
+            {txState === 'success' && (
+              <div className="p-4 rounded-xl border border-emerald-200/25 bg-emerald-200/8 text-emerald-100 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 mt-0.5" />
+                <div>
+                  <div className="font-semibold">Mint successful</div>
+                  <a className="text-sm underline break-all" href={`https://amoy.polygonscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">
+                    {txHash}
+                  </a>
                 </div>
               </div>
             )}
 
-            {txStatus === 'success' && (
-              <div className="bg-green-600/20 border border-green-500/30 rounded-lg p-4 flex items-start space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-white font-semibold mb-1">Minting Successful!</div>
-                  <div className="text-white/60 text-sm">
-                    Your Chara NFT has been minted successfully!
-                  </div>
-                  {txHash && (
-                    <div className="text-white/40 text-xs mt-2 break-all">
-                      TX: {txHash}
-                    </div>
-                  )}
-                </div>
+            {(txState === 'error' || error) && (
+              <div className="p-4 rounded-xl border border-red-200/25 bg-red-200/8 text-red-100 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 mt-0.5" />
+                <div>{error || 'Mint failed'}</div>
               </div>
             )}
-
-            {txStatus === 'error' && (
-              <div className="bg-red-600/20 border border-red-500/30 rounded-lg p-4 flex items-start space-x-3">
-                <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-white font-semibold mb-1">Minting Failed</div>
-                  <div className="text-white/60 text-sm">
-                    Please try again or check your wallet.
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="mt-6 text-center text-white/50 text-sm">
-            <p>Contract: {CONTRACT_ADDRESS.slice(0, 6)}...{CONTRACT_ADDRESS.slice(-4)}</p>
-            <p className="mt-1">Network: Polygon Amoy Testnet (Chain ID: 80002)</p>
           </div>
         </div>
       </div>
     </section>
+  )
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-cyan-200/15 bg-slate-900/45 p-4">
+      <div className="text-sm text-slate-300/70">{label}</div>
+      <div className="text-2xl font-bold mt-1">{value}</div>
+    </div>
   )
 }

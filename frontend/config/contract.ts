@@ -1,6 +1,7 @@
 // Contract configuration
 // Update CONTRACT_ADDRESS after deployment
-export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x5239ad0C0872E9ECB3b8fcd0aB5418C7015C0978'
+export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? ''
+export const HAS_CONTRACT_CONFIG = Boolean(CONTRACT_ADDRESS)
 
 // Contract ABI - Essential functions only
 export const CONTRACT_ABI = [

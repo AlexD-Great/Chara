@@ -17,7 +17,7 @@ const CharaSDK = require('./CharaSDK');
 const { ethers } = require('ethers');
 
 // Initialize
-const provider = new ethers.providers.JsonRpcProvider('YOUR_RPC_URL');
+const provider = new ethers.JsonRpcProvider('YOUR_RPC_URL');
 const charaAddress = '0x...'; // Chara NFT contract address
 const charaABI = [...]; // Chara NFT ABI
 
@@ -67,7 +67,7 @@ const multiplier = await chara.getReputationMultiplier(userAddress);
 // Returns: 100 = 1x, 150 = 1.5x, 200 = 2x
 
 // Calculate adjusted reward
-const baseReward = ethers.utils.parseEther('100');
+const baseReward = ethers.parseEther('100');
 const adjustedReward = await chara.calculateAdjustedReward(baseReward, userAddress);
 ```
 

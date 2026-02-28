@@ -135,8 +135,8 @@ class CharaSDK {
   async calculateAdjustedReward(baseReward, walletAddress) {
     try {
       const multiplier = await this.getReputationMultiplier(walletAddress);
-      const baseRewardBN = ethers.BigNumber.from(baseReward);
-      const adjustedReward = baseRewardBN.mul(multiplier).div(100);
+      const baseRewardBigInt = typeof baseReward === 'bigint' ? baseReward : BigInt(baseReward.toString());
+      const adjustedReward = (baseRewardBigInt * BigInt(multiplier)) / 100n;
       return adjustedReward.toString();
     } catch (error) {
       console.error('Error calculating adjusted reward:', error);

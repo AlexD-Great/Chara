@@ -1,69 +1,61 @@
 'use client'
 
-import { Github, ExternalLink } from 'lucide-react'
+import { ExternalLink, Github } from 'lucide-react'
+import { CONTRACT_ADDRESS } from '@/config/contract'
+
+const contractUrl = CONTRACT_ADDRESS ? `https://amoy.polygonscan.com/address/${CONTRACT_ADDRESS}` : null
 
 export function Footer() {
   return (
-    <footer className="py-12 px-4 border-t border-white/10">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <h3 className="text-white font-bold text-lg mb-4">Chara</h3>
-            <p className="text-gray-400 text-sm">
-              DeFi reputation scoring powered by on-chain activity on Polygon. Build credit, unlock benefits.
-            </p>
-          </div>
-          
-          <div>
-            <h4 className="text-white font-semibold mb-4">Product</h4>
-            <ul className="space-y-2">
-              <li><a href="#mint" className="text-gray-400 hover:text-white text-sm transition">Mint NFT</a></li>
-              <li><a href="#features" className="text-gray-400 hover:text-white text-sm transition">Features</a></li>
-              <li><a href="#protocols" className="text-gray-400 hover:text-white text-sm transition">Integrations</a></li>
-              <li><a href="https://github.com/AlexD-Great/Chara#-roadmap" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white text-sm transition">Roadmap</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-white font-semibold mb-4">Developers</h4>
-            <ul className="space-y-2">
-              <li><a href="https://github.com/AlexD-Great/Chara/tree/main/sdk" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white text-sm transition">SDK Documentation</a></li>
-              <li><a href="https://github.com/AlexD-Great/Chara/tree/main/sdk/examples" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white text-sm transition">Integration Examples</a></li>
-              <li><a href="https://github.com/AlexD-Great/Chara" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white text-sm transition">GitHub Repository</a></li>
-              <li><a href="https://amoy.polygonscan.com/address/0x5239ad0C0872E9ECB3b8fcd0aB5418C7015C0978" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white text-sm transition">Smart Contract</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-white font-semibold mb-4">Network</h4>
-            <ul className="space-y-2">
-              <li className="text-gray-400 text-sm">Polygon Amoy Testnet</li>
-              <li className="text-gray-400 text-sm">Chain ID: 80002</li>
+    <footer className="mt-16 py-10 px-4 border-t border-cyan-100/12">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div>
+          <h3 className="text-xl font-bold gradient-text">Chara</h3>
+          <p className="text-sm text-slate-300/75 mt-2">On-chain DeFi reputation identity for Polygon protocols.</p>
+        </div>
+
+        <div>
+          <h4 className="font-semibold mb-2">Navigate</h4>
+          <ul className="space-y-1 text-sm text-slate-300/75">
+            <li><a href="#mint">Mint</a></li>
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#protocols">Protocols</a></li>
+            <li><a href="#features">Benefits</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-semibold mb-2">Developers</h4>
+          <ul className="space-y-1 text-sm text-slate-300/75">
+            <li><a href="https://github.com/AlexD-Great/Chara/tree/main/sdk" target="_blank" rel="noreferrer">SDK</a></li>
+            <li><a href="https://github.com/AlexD-Great/Chara/tree/main/sdk/examples" target="_blank" rel="noreferrer">Examples</a></li>
+            {contractUrl && (
               <li>
-                <a href="https://faucet.polygon.technology/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white text-sm transition flex items-center gap-1">
-                  Get Test POL <ExternalLink className="w-3 h-3" />
+                <a href={contractUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1">
+                  Contract <ExternalLink className="w-3 h-3" />
                 </a>
               </li>
-            </ul>
-            <div className="flex space-x-4 mt-4">
-              <a href="https://github.com/AlexD-Great/Chara" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
-                <Github className="w-6 h-6" />
-              </a>
-            </div>
-          </div>
+            )}
+          </ul>
         </div>
-        
-        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm mb-4 md:mb-0">
-            © 2024 Chara. Built for Polygon Hackathon.
-          </p>
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-500 text-sm">Deployed on</span>
-            <a href="https://amoy.polygonscan.com/address/0x5239ad0C0872E9ECB3b8fcd0aB5418C7015C0978" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm transition">
-              Polygon Amoy
+
+        <div>
+          <h4 className="font-semibold mb-2">Network</h4>
+          <p className="text-sm text-slate-300/75">Polygon Amoy Testnet</p>
+          <p className="text-sm text-slate-300/75">Chain ID 80002</p>
+          <a href="https://faucet.polygon.technology/" target="_blank" rel="noreferrer" className="text-sm text-cyan-100 inline-flex items-center gap-1 mt-2">
+            Get Test POL <ExternalLink className="w-3 h-3" />
+          </a>
+          <div className="mt-3">
+            <a href="https://github.com/AlexD-Great/Chara" target="_blank" rel="noreferrer">
+              <Github className="w-5 h-5 text-slate-200/80" />
             </a>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto mt-8 pt-6 border-t border-cyan-100/10 text-sm text-slate-300/65">
+        Chara testnet build • {new Date().getFullYear()}
       </div>
     </footer>
   )

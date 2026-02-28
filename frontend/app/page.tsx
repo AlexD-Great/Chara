@@ -19,7 +19,8 @@ export default function Home() {
   if (!mounted) return null
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+    <main className="min-h-screen relative overflow-x-hidden">
+      <div className="noise-overlay" />
       <Navbar />
       <Hero />
       <MintSection />

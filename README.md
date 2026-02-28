@@ -250,7 +250,7 @@ Your Chara score is calculated based on:
 - **Live Demo**: https://chara-one.vercel.app/
 - **GitHub**: https://github.com/AlexD-Great/Chara
 - **Contract**: [0x5239ad0C0872E9ECB3b8fcd0aB5418C7015C0978](https://amoy.polygonscan.com/address/0x5239ad0C0872E9ECB3b8fcd0aB5418C7015C0978)
-- **Documentation**: Coming soon
+- **Documentation**: `sdk/README.md` and backend REST endpoints in this README
 
 ## 📜 License
 

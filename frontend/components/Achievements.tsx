@@ -300,7 +300,7 @@ export function Achievements({ reputation, activityCount = 0 }: AchievementProps
         <div className="mt-6 p-4 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-lg text-center">
           <Crown className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
           <p className="text-white font-bold">🎉 Achievement Master!</p>
-          <p className="text-white/70 text-sm">You've unlocked all achievements!</p>
+          <p className="text-white/70 text-sm">You have unlocked all achievements!</p>
         </div>
       )}
     </div>

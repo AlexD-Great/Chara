@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Menu, X } from 'lucide-react'
 
 declare global {
   interface Window {
@@ -9,126 +9,114 @@ declare global {
   }
 }
 
+function shortAddress(address: string) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
+}
+
 export function Navbar() {
-  const [address, setAddress] = useState<string>('')
+  const [address, setAddress] = useState('')
   const [isConnected, setIsConnected] = useState(false)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    checkConnection()
-  }, [])
-
-  const checkConnection = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' })
-        if (accounts.length > 0) {
-          setAddress(accounts[0])
-          setIsConnected(true)
-        }
-      } catch (error) {
-        console.error('Error checking connection:', error)
-      }
-    }
-  }
-
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        })
+    ;(async () => {
+      if (!window.ethereum) return
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+      if (accounts.length) {
         setAddress(accounts[0])
         setIsConnected(true)
-        
-        // Switch to Polygon Amoy testnet
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x13882' }], // 80002 in hex
-          })
-        } catch (switchError: any) {
-          // If network doesn't exist, add it
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: '0x13882',
-                chainName: 'Polygon Amoy Testnet',
-                nativeCurrency: {
-                  name: 'POL',
-                  symbol: 'POL',
-                  decimals: 18
-                },
-                rpcUrls: ['https://rpc-amoy.polygon.technology'],
-                blockExplorers: [{
-                  name: 'PolygonScan',
-                  url: 'https://amoy.polygonscan.com'
-                }]
-              }],
-            })
-          }
-        }
-      } catch (error) {
-        console.error('Error connecting wallet:', error)
-        alert('Please install MetaMask!')
       }
-    } else {
-      alert('Please install MetaMask!')
+    })()
+  }, [])
+
+  const connectWallet = async () => {
+    if (!window.ethereum) return
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+    setAddress(accounts[0])
+    setIsConnected(true)
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x13882' }]
+      })
+    } catch (error: any) {
+      if (error.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: '0x13882',
+              chainName: 'Polygon Amoy Testnet',
+              nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+              rpcUrls: ['https://rpc-amoy.polygon.technology'],
+              blockExplorers: [{ name: 'PolygonScan', url: 'https://amoy.polygonscan.com' }]
+            }
+          ]
+        })
+      }
     }
   }
 
-  const disconnectWallet = () => {
-    setAddress('')
-    setIsConnected(false)
-  }
-
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-  }
+  const links = [
+    { href: '#mint', label: 'Mint' },
+    { href: '#dashboard', label: 'Dashboard' },
+    { href: '#protocols', label: 'Protocols' },
+    { href: '#features', label: 'Benefits' }
+  ]
 
   return (
-    <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-8 h-8 text-purple-400" />
-            <span className="text-2xl font-bold gradient-text">Chara</span>
-          </div>
+    <nav className="fixed top-0 inset-x-0 z-50 border-b border-cyan-200/10 bg-slate-950/65 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <a href="#" className="flex items-center gap-2 reveal">
+          <Sparkles className="w-6 h-6 text-cyan-300" />
+          <span className="text-2xl font-bold gradient-text">Chara</span>
+        </a>
 
-          <div className="flex items-center space-x-4">
-            <a href="#mint" className="text-white/80 hover:text-white transition">
-              Mint
+        <div className="hidden md:flex items-center gap-7 text-sm text-slate-200/90">
+          {links.map((link) => (
+            <a key={link.href} href={link.href} className="hover:text-cyan-200 transition">
+              {link.label}
             </a>
-            <a href="#features" className="text-white/80 hover:text-white transition">
-              Features
-            </a>
-            <a href="#about" className="text-white/80 hover:text-white transition">
-              About
-            </a>
-
-            {isConnected ? (
-              <div className="flex items-center space-x-2">
-                <div className="px-4 py-2 bg-purple-600/20 rounded-lg border border-purple-500/30">
-                  <span className="text-sm text-white">{formatAddress(address)}</span>
-                </div>
-                <button
-                  onClick={disconnectWallet}
-                  className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 rounded-lg border border-red-500/30 text-white transition"
-                >
-                  Disconnect
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={connectWallet}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg text-white font-semibold transition transform hover:scale-105"
-              >
-                Connect Wallet
-              </button>
-            )}
-          </div>
+          ))}
         </div>
+
+        <div className="hidden md:flex items-center gap-3">
+          {isConnected ? (
+            <div className="px-4 py-2 rounded-xl border border-cyan-200/25 bg-cyan-300/8 text-cyan-100 text-sm">
+              {shortAddress(address)}
+            </div>
+          ) : (
+            <button
+              onClick={connectWallet}
+              className="px-5 py-2 rounded-xl text-slate-950 font-semibold bg-gradient-to-r from-cyan-300 to-emerald-300 hover:opacity-95 transition"
+            >
+              Connect Wallet
+            </button>
+          )}
+        </div>
+
+        <button className="md:hidden text-slate-100" onClick={() => setOpen((v) => !v)} aria-label="menu">
+          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
+
+      {open && (
+        <div className="md:hidden border-t border-cyan-200/10 bg-slate-950/90 px-4 py-4 space-y-3">
+          {links.map((link) => (
+            <a key={link.href} href={link.href} className="block text-slate-200" onClick={() => setOpen(false)}>
+              {link.label}
+            </a>
+          ))}
+          {!isConnected && (
+            <button
+              onClick={connectWallet}
+              className="w-full mt-2 px-4 py-2 rounded-xl text-slate-950 font-semibold bg-gradient-to-r from-cyan-300 to-emerald-300"
+            >
+              Connect Wallet
+            </button>
+          )}
+        </div>
+      )}
     </nav>
   )
 }
