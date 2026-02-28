@@ -32,6 +32,26 @@ export function MintSection() {
   }, [])
 
   useEffect(() => {
+    if (!window.ethereum) return
+    const onAccountsChanged = (accounts: string[]) => {
+      if (accounts.length > 0) {
+        setAddress(accounts[0])
+        setIsConnected(true)
+      } else {
+        setAddress('')
+        setIsConnected(false)
+      }
+      setTxState('idle')
+      setTxHash('')
+      setError('')
+    }
+    window.ethereum.on?.('accountsChanged', onAccountsChanged)
+    return () => {
+      window.ethereum?.removeListener?.('accountsChanged', onAccountsChanged)
+    }
+  }, [])
+
+  useEffect(() => {
     if (address && HAS_CONTRACT_CONFIG) {
       loadUserData(address)
     }
@@ -90,6 +110,22 @@ export function MintSection() {
     await loadUserData(accounts[0])
   }
 
+  const switchWallet = async () => {
+    if (!window.ethereum) {
+      setError('MetaMask is required for wallet switching.')
+      return
+    }
+    try {
+      await window.ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }]
+      })
+    } catch {
+      // fallback to regular request
+    }
+    await connectWallet()
+  }
+
   const handleMint = async () => {
     if (!window.ethereum || !HAS_CONTRACT_CONFIG) return
     try {
@@ -145,6 +181,12 @@ export function MintSection() {
               <div className="text-sm text-slate-300/80">Wallet</div>
               <div className="font-semibold text-cyan-100">{address}</div>
               <div className="text-sm text-slate-300/70 mt-1">Minted by this wallet: {numberMinted}</div>
+              <button
+                onClick={switchWallet}
+                className="mt-3 px-3 py-1.5 text-xs rounded-lg border border-cyan-200/25 bg-slate-900/55 text-cyan-100"
+              >
+                Use Different Wallet
+              </button>
             </div>
           )}
 

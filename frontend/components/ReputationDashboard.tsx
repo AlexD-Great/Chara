@@ -38,6 +38,7 @@ export function ReputationDashboard() {
   const [qualifiesForLoan, setQualifiesForLoan] = useState(false)
   const [loading, setLoading] = useState(false)
   const [activityCount, setActivityCount] = useState(0)
+  const [protocolCount, setProtocolCount] = useState(0)
   const [error, setError] = useState('')
 
   const checkConnection = async () => {
@@ -57,6 +58,26 @@ export function ReputationDashboard() {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
     setAddress(accounts[0])
     setIsConnected(true)
+  }
+
+  const switchWallet = async () => {
+    if (!window.ethereum) {
+      setError('MetaMask not detected.')
+      return
+    }
+    try {
+      await window.ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }]
+      })
+    } catch {
+      // fallback below
+    }
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+    if (accounts.length > 0) {
+      setAddress(accounts[0])
+      setIsConnected(true)
+    }
   }
 
   const loadReputationData = useCallback(async () => {
@@ -94,12 +115,33 @@ export function ReputationDashboard() {
     }
   }, [address])
 
-  const handleActivityLoaded = useCallback((payload: { activityCount: number }) => {
+  const handleActivityLoaded = useCallback((payload: { activityCount: number; protocolCount?: number }) => {
     setActivityCount(payload.activityCount)
+    setProtocolCount(payload.protocolCount || 0)
   }, [])
 
   useEffect(() => {
     checkConnection()
+  }, [])
+
+  useEffect(() => {
+    if (!window.ethereum) return
+    const onAccountsChanged = (accounts: string[]) => {
+      if (accounts.length > 0) {
+        setAddress(accounts[0])
+        setIsConnected(true)
+      } else {
+        setAddress('')
+        setIsConnected(false)
+      }
+      setActivityCount(0)
+      setProtocolCount(0)
+      setError('')
+    }
+    window.ethereum.on?.('accountsChanged', onAccountsChanged)
+    return () => {
+      window.ethereum?.removeListener?.('accountsChanged', onAccountsChanged)
+    }
   }, [])
 
   useEffect(() => {
@@ -140,7 +182,15 @@ export function ReputationDashboard() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h2 className="text-4xl font-bold">Reputation Dashboard</h2>
-          <p className="text-slate-200/75 mt-2">Track score, rewards, and live protocol activity for {address.slice(0, 6)}...{address.slice(-4)}.</p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-2">
+            <p className="text-slate-200/75">Track score, rewards, and live protocol activity for {address.slice(0, 6)}...{address.slice(-4)}.</p>
+            <button
+              onClick={switchWallet}
+              className="px-4 py-2 rounded-xl border border-cyan-200/25 bg-slate-900/55 text-cyan-100 text-sm w-fit"
+            >
+              Switch Wallet
+            </button>
+          </div>
         </div>
 
         {loading && <div className="glass rounded-2xl p-6 mb-6">Loading reputation data...</div>}
@@ -190,6 +240,10 @@ export function ReputationDashboard() {
 
         <div className="mt-6">
           <Achievements reputation={reputation} activityCount={activityCount} />
+        </div>
+
+        <div className="mt-4 text-sm text-slate-300/70">
+          Activity tracked: {activityCount} events across {protocolCount} protocol addresses.
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">

@@ -80,7 +80,7 @@ export function ActivityFeed({
           protocolCount: payload.protocols?.length || 0
         })
       } catch (err: any) {
-        setError(err.message || 'Failed to load activity')
+        setError(err.message || 'Backend unreachable. Check NEXT_PUBLIC_BACKEND_URL and backend deployment status.')
       } finally {
         setLoading(false)
       }
@@ -154,7 +154,9 @@ export function ActivityFeed({
       )}
 
       {activity && activity.recentActivities.length === 0 && (
-        <div className="text-slate-300/70 text-sm">No tracked DeFi transactions yet for this wallet.</div>
+        <div className="text-slate-300/70 text-sm">
+          Wallet is monitored, but no qualifying DeFi activity has been detected yet. Perform swaps/LP/loan/governance actions on testnet and wait for the monitor cycle.
+        </div>
       )}
     </div>
   )
