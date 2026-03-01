@@ -1,6 +1,4 @@
 const { ethers } = require('ethers');
-const fs = require('fs');
-const path = require('path');
 const { loadState, saveState } = require('./stateStore');
 
 const KNOWN_PROTOCOLS = {
@@ -27,11 +25,10 @@ const protocolStats = new Map();
 const lastProcessedBlock = { value: 0 };
 let persistTimer = null;
 
-function getContractABI() {
-  return JSON.parse(
-    fs.readFileSync(path.join(__dirname, '../../../artifacts/contracts/CharaNFT.sol/CharaNFT.json'), 'utf8')
-  ).abi;
-}
+const CHARA_MONITOR_ABI = [
+  'function getReputationScore(address wallet) view returns ((uint256 transactionVolume,uint256 loanHistory,uint256 liquidityProvision,uint256 protocolDiversity,uint256 governanceScore,uint256 accountAge,uint256 totalScore,uint256 reputationLevel,uint256 lastUpdated))',
+  'function updateReputationScore(address wallet,uint256 transactionVolume,uint256 loanHistory,uint256 liquidityProvision,uint256 protocolDiversity,uint256 governanceScore,uint256 accountAge) external'
+];
 
 function hydrateFromStore() {
   const state = loadState();
@@ -138,7 +135,7 @@ async function initializeMonitor() {
   }
 
   signer = new ethers.Wallet(privateKey, provider);
-  charaContract = new ethers.Contract(contractAddress, getContractABI(), signer);
+  charaContract = new ethers.Contract(contractAddress, CHARA_MONITOR_ABI, signer);
 
   hydrateFromStore();
 
