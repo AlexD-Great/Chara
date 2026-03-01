@@ -13,6 +13,9 @@ declare global {
 
 type TxState = 'idle' | 'pending' | 'success' | 'error'
 
+const MIN_AMOY_PRIORITY_FEE_GWEI = BigInt(26)
+const AMOY_CHAIN_ID = BigInt(80002)
+
 export function MintSection() {
   const [address, setAddress] = useState('')
   const [isConnected, setIsConnected] = useState(false)
@@ -139,7 +142,8 @@ export function MintSection() {
       const signer = await provider.getSigner()
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
       const price = await contract.mintPrice()
-      const tx = await contract.mint({ value: price })
+      const feeOverrides = await getAmoyFeeOverrides(provider)
+      const tx = await contract.mint({ value: price, ...feeOverrides })
       setTxHash(tx.hash)
       await tx.wait()
 
@@ -163,7 +167,8 @@ export function MintSection() {
       const signer = await provider.getSigner()
       const abi = ['function demoSwap(uint256 amountOut) external payable']
       const demo = new ethers.Contract(DEMO_SWAP_ADDRESS, abi, signer)
-      const tx = await demo.demoSwap(1000, { value: ethers.parseEther('0.001') })
+      const feeOverrides = await getAmoyFeeOverrides(provider)
+      const tx = await demo.demoSwap(1000, { value: ethers.parseEther('0.001'), ...feeOverrides })
       setDemoTxHash(tx.hash)
       await tx.wait()
       setDemoTxState('success')
@@ -279,6 +284,29 @@ export function MintSection() {
       </div>
     </section>
   )
+}
+
+async function getAmoyFeeOverrides(provider: ethers.BrowserProvider) {
+  try {
+    const network = await provider.getNetwork()
+    // 80002 = Polygon Amoy
+    if (network.chainId !== AMOY_CHAIN_ID) return {}
+
+    const feeData = await provider.getFeeData()
+    const minPriority = ethers.parseUnits(MIN_AMOY_PRIORITY_FEE_GWEI.toString(), 'gwei')
+    const maxPriorityFeePerGas =
+      feeData.maxPriorityFeePerGas && feeData.maxPriorityFeePerGas > minPriority
+        ? feeData.maxPriorityFeePerGas
+        : minPriority
+
+    const base = feeData.gasPrice ?? ethers.parseUnits('40', 'gwei')
+    const maxFeePerGas = base + maxPriorityFeePerGas * BigInt(2)
+
+    return { maxPriorityFeePerGas, maxFeePerGas }
+  } catch {
+    // Let wallet defaults handle fees if fee fetch fails.
+    return {}
+  }
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
