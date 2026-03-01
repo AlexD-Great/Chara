@@ -8,6 +8,13 @@ const KNOWN_PROTOCOLS = {
   '0xe592427a0aece92de3edee1f18e0157c05861564': { name: 'Uniswap V3 Router', category: 'dex' }
 };
 
+if (process.env.DEMO_SWAP_CONTRACT) {
+  KNOWN_PROTOCOLS[process.env.DEMO_SWAP_CONTRACT.toLowerCase()] = {
+    name: 'Chara DemoSwapEmitter',
+    category: 'demo'
+  };
+}
+
 const EVENT_SIGNATURES = {
   SWAP: '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822',
   MINT_LP: '0x4c209b5fc8ad50758f13e2e1088ba56a560dff690a1c6fef26394f4c03821c4f',

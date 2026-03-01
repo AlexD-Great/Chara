@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { Loader2, CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react'
-import { CONTRACT_ADDRESS, CONTRACT_ABI, HAS_CONTRACT_CONFIG } from '@/config/contract'
+import { CONTRACT_ADDRESS, CONTRACT_ABI, HAS_CONTRACT_CONFIG, DEMO_SWAP_ADDRESS, HAS_DEMO_SWAP } from '@/config/contract'
 
 declare global {
   interface Window {
@@ -24,6 +24,8 @@ export function MintSection() {
   const [mintingActive, setMintingActive] = useState(false)
   const [numberMinted, setNumberMinted] = useState(0)
   const [txState, setTxState] = useState<TxState>('idle')
+  const [demoTxState, setDemoTxState] = useState<TxState>('idle')
+  const [demoTxHash, setDemoTxHash] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -152,6 +154,25 @@ export function MintSection() {
     }
   }
 
+  const runDemoSwap = async () => {
+    if (!window.ethereum || !HAS_DEMO_SWAP) return
+    try {
+      setDemoTxState('pending')
+      setError('')
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+      const abi = ['function demoSwap(uint256 amountOut) external payable']
+      const demo = new ethers.Contract(DEMO_SWAP_ADDRESS, abi, signer)
+      const tx = await demo.demoSwap(1000, { value: ethers.parseEther('0.001') })
+      setDemoTxHash(tx.hash)
+      await tx.wait()
+      setDemoTxState('success')
+    } catch (err: any) {
+      setDemoTxState('error')
+      setError(err.reason || err.message || 'Demo swap failed')
+    }
+  }
+
   return (
     <section id="mint" className="py-14 px-4">
       <div className="max-w-5xl mx-auto">
@@ -226,6 +247,31 @@ export function MintSection() {
               <div className="p-4 rounded-xl border border-red-200/25 bg-red-200/8 text-red-100 flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 mt-0.5" />
                 <div>{error || 'Mint failed'}</div>
+              </div>
+            )}
+
+            {HAS_DEMO_SWAP && isConnected && (
+              <div className="pt-4 border-t border-cyan-100/10">
+                <p className="text-sm text-slate-300/75 mb-2">
+                  Demo action: emit a real on-chain swap-style event for dashboard recording.
+                </p>
+                <button
+                  onClick={runDemoSwap}
+                  disabled={demoTxState === 'pending'}
+                  className="w-full py-3 rounded-xl border border-cyan-200/25 bg-slate-900/55 text-cyan-100 font-semibold disabled:opacity-60"
+                >
+                  {demoTxState === 'pending' ? 'Running demo swap...' : 'Run Demo DeFi Tx'}
+                </button>
+                {demoTxState === 'success' && demoTxHash && (
+                  <a
+                    href={`https://amoy.polygonscan.com/tx/${demoTxHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 text-xs text-cyan-100 underline break-all inline-block"
+                  >
+                    Demo tx: {demoTxHash}
+                  </a>
+                )}
               </div>
             )}
           </div>
