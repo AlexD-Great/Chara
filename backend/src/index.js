@@ -16,6 +16,7 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 3001;
+const ENABLE_EVENT_LISTENER = process.env.ENABLE_EVENT_LISTENER === 'true';
 
 app.use(cors());
 app.use(express.json());
@@ -188,7 +189,12 @@ app.listen(PORT, async () => {
   console.log(`Health check: http://localhost:${PORT}/health`);
 
   if (process.env.PRIVATE_KEY_DEPLOYER && process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) {
-    startEventListener();
+    if (ENABLE_EVENT_LISTENER) {
+      startEventListener();
+      console.log('Contract event listener enabled');
+    } else {
+      console.log('Contract event listener disabled (set ENABLE_EVENT_LISTENER=true to enable)');
+    }
     await startActivityMonitor();
 
     const signerAddress = getMonitorSignerAddress();
